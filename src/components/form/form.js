@@ -4,10 +4,21 @@ import MaskedInput from 'react-input-mask';
 
 import './form.scss';
 
-const Form = (props) => {
+const isNotFilledTel = v =>
+    v && v.indexOf("_") === -1 ? undefined : "Phone number is required.";
+
+const Input = React.memo(props => {
+    const { name, inputRef, value, maskChar, ...inputProps } = props;
+    console.log(props);
+    return <input value={value} name={name} ref={inputRef} {...inputProps} />;
+});
+
+
+export default function Form(props) {
     const { handleSubmit, register, errors } = useForm();
 
     const onSubmit = (values) => {
+        console.log(values);
         values.phone = values.phone.trim().replace(/\D/g, '').replace(/(^8|^7)/g, '+7');
     }
 
@@ -27,8 +38,9 @@ const Form = (props) => {
     }
 
     const [dateField, setDateField] = useState(formatDate(defaultDate()));
-    const [phoneField, setPhoneField] = useState("");
+    const [phoneField, setPhoneField] = useState("+7 (916) 426-5709");
 
+    const [tel, setTel] = React.useState("");
     return (
         <div className="call-form__wrapper mx-auto container">
             <form onSubmit={handleSubmit(onSubmit)} className="call-form">
@@ -42,18 +54,18 @@ const Form = (props) => {
                         onChange={(e) => setPhoneField(e.target.value)}
                         alwaysShowMask>
                         {(inputProps) => {
-                            console.log(inputProps.date);
                             return (
                                 <input
                                     id="phone"
+                                    type="tel"
                                     value={inputProps.phone}
                                     name={inputProps.name}
                                     ref={
                                         register({
-                                            required: "Необходимо заполнить дату",
+                                            required: "Необходимо указать телефон",
                                             pattern: {
-                                                value: /^(\d{2}).(\d{2}).(\d{4}) (\d{2}):(\d{2})$/gm,
-                                                message: "Неверный формат даты"
+                                                value: /^\s*(\+7|8)\s*\(?\d{3}\)?\s*\d{3}[\s-]*\d{2}[\s-]*\d{2}\s*$/gm,
+                                                message: "Неверный формат номера телефона"
                                             }
                                         })
                                     }
@@ -61,20 +73,6 @@ const Form = (props) => {
                             )
                         }}
                     </MaskedInput>
-                    <input
-                        type="text"
-                        id="phone"
-                        name="phone"
-                        ref={
-                            register({
-                                required: "Необходимо указать телефон",
-                                pattern: {
-                                    value: /^\s*(\+7|8)\s*\(?\d{3}\)?\s*\d{3}[\s-]*\d{2}[\s-]*\d{2}\s*$/gm,
-                                    message: "Неверный формат номера телефона"
-                                }
-                            })
-                        }
-                        className="form-control" />
                 </div>
 
                 {errors.phone ? <ErrorMessage message={errors.phone.message} /> : ''}
@@ -89,10 +87,10 @@ const Form = (props) => {
                         onChange={(e) => setDateField(e.target.value)}
                         alwaysShowMask>
                         {(inputProps) => {
-                            console.log(inputProps.date);
+                            console.log(inputProps);
                             return (
                                 <input
-                                    id="date"
+                                    type="text"
                                     value={inputProps.date}
                                     name={inputProps.name}
                                     ref={
@@ -146,6 +144,22 @@ const Form = (props) => {
 
                 {errors.agree ? <ErrorMessage message={errors.agree.message} /> : ''}
 
+
+                <MaskedInput
+                    value={tel}
+                    name="maskedInputTel"
+                    inputRef={register({
+                        validate: {
+                            inputTelRequired: isNotFilledTel
+                        }
+                    })}
+                    mask="+7 (999) 999-99-99"
+                    alwaysShowMask
+                    onChange={e => setTel(e.target.value)}
+                >
+                    <Input type="tel" autoComplete="tel-national" />
+                </MaskedInput>
+
                 <input type="submit" className="btn btn-primary" value="Отправить заявку" />
             </form >
         </div >
@@ -160,4 +174,3 @@ const ErrorMessage = ({ message }) => {
     );
 }
 
-export default Form;
