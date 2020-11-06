@@ -1,97 +1,163 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import MaskedInput from 'react-input-mask';
+
 import './form.scss';
 
-export class Form extends Component {
+const Form = (props) => {
+    const { handleSubmit, register, errors } = useForm();
 
-    state = {
-        phone: '',
-        date: 0,
-        comment: ''
+    const onSubmit = (values) => {
+        values.phone = values.phone.trim().replace(/\D/g, '').replace(/(^8|^7)/g, '+7');
     }
 
-    onSubmit = (e) => {
-        e.preventDefault();
-        console.log(this.state);
+    function formatDate(d) {
+        const date = new Date(d);
+        return ("0" + (date.getDate())).slice(-2) + "." +
+            ("0" + (date.getMonth() + 1)).slice(-2) + "." +
+            date.getFullYear() + " " +
+            ("0" + (date.getHours())).slice(-2) + ":" +
+            ("0" + (date.getMinutes())).slice(-2);
     }
 
-    onPhoneChange = (e) => {
-        this.setState({
-            phone: e.target.value
-        });
+    function defaultDate() {
+        const date = new Date(Date.now());
+        const tomorrow = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1, 0, 0);
+        return tomorrow.getTime();
     }
 
-    onDateChange = (e) => {
-        this.setState({
-            date: e.target.value
-        });
-    }
+    const [dateField, setDateField] = useState(formatDate(defaultDate()));
+    const [phoneField, setPhoneField] = useState("");
 
-    onCommentChange = (e) => {
-        this.setState({
-            comment: e.target.value
-        });
-    }
+    return (
+        <div className="call-form__wrapper mx-auto container">
+            <form onSubmit={handleSubmit(onSubmit)} className="call-form">
 
-    componentDidMount() {
-        let now = new Date();
-        let defaultTime = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate() + 1,
-            0,
-            0
-        );
-        console.log(defaultTime);
-    }
+                <div className="form-group">
+                    <label htmlFor="phone">Номер телефона</label>
+                    <MaskedInput
+                        name="phone"
+                        mask="+7 (999) 999-9999"
+                        value={phoneField}
+                        onChange={(e) => setPhoneField(e.target.value)}
+                        alwaysShowMask>
+                        {(inputProps) => {
+                            console.log(inputProps.date);
+                            return (
+                                <input
+                                    id="phone"
+                                    value={inputProps.phone}
+                                    name={inputProps.name}
+                                    ref={
+                                        register({
+                                            required: "Необходимо заполнить дату",
+                                            pattern: {
+                                                value: /^(\d{2}).(\d{2}).(\d{4}) (\d{2}):(\d{2})$/gm,
+                                                message: "Неверный формат даты"
+                                            }
+                                        })
+                                    }
+                                    className="form-control" />
+                            )
+                        }}
+                    </MaskedInput>
+                    <input
+                        type="text"
+                        id="phone"
+                        name="phone"
+                        ref={
+                            register({
+                                required: "Необходимо указать телефон",
+                                pattern: {
+                                    value: /^\s*(\+7|8)\s*\(?\d{3}\)?\s*\d{3}[\s-]*\d{2}[\s-]*\d{2}\s*$/gm,
+                                    message: "Неверный формат номера телефона"
+                                }
+                            })
+                        }
+                        className="form-control" />
+                </div>
 
-    render() {
+                {errors.phone ? <ErrorMessage message={errors.phone.message} /> : ''}
 
-        return (
-            <div className="call-form__wrapper mx-auto container">
-                <form onSubmit={this.onSubmit} className="call-form">
+                <div className="form-group">
+                    <label htmlFor="date">Дата и время обратного звонка</label>
 
-                    <div className="form-group">
-                        <label htmlFor="call-form__phone">Номер телефона</label>
-                        <input
-                            id="call-form__phone"
-                            type="text"
-                            onChange={this.onPhoneChange}
-                            className="form-control" />
-                    </div>
+                    <MaskedInput
+                        name="date"
+                        mask="99.99.9999 99:99"
+                        value={dateField}
+                        onChange={(e) => setDateField(e.target.value)}
+                        alwaysShowMask>
+                        {(inputProps) => {
+                            console.log(inputProps.date);
+                            return (
+                                <input
+                                    id="date"
+                                    value={inputProps.date}
+                                    name={inputProps.name}
+                                    ref={
+                                        register({
+                                            required: "Необходимо заполнить дату",
+                                            pattern: {
+                                                value: /^(\d{2}).(\d{2}).(\d{4}) (\d{2}):(\d{2})$/gm,
+                                                message: "Неверный формат даты"
+                                            }
+                                        })
+                                    }
+                                    className="form-control" />
+                            )
+                        }}
+                    </MaskedInput>
+                </div>
 
+                {errors.date ? <ErrorMessage message={errors.date.message} /> : ''}
 
-                    <div className="form-group">
-                        <label htmlFor="call-form__time">Дата и время обратного звонка</label>
-                        <input
-                            id="call-form__time"
-                            type="text"
-                            onChange={this.onDateChange}
-                            className="form-control" />
-                    </div>
+                <div className="form-group">
+                    <label htmlFor="comment">Комментарий к заявке</label>
+                    <textarea
+                        name="comment"
+                        id="comment"
+                        ref={register({
+                            maxLength: {
+                                value: 1024,
+                                message: "Слишком длинный текст"
+                            }
+                        })}
+                        className="form-control"></textarea>
+                </div>
 
-                    <div className="form-group">
-                        <label htmlFor="call-form__comment">Комментарий к заявке</label>
-                        <textarea
-                            name="call-form__comment"
-                            id="call-form__comment"
-                            onChange={this.onCommentChange}
-                            className="form-control"></textarea>
-                    </div>
+                {errors.comment ? <ErrorMessage message={errors.comment.message} /> : ''}
 
-                    <div className="input-group mb-3">
-                        <div className="input-group-prepend">
-                            <div className="input-group-text">
-                                <input id="call-form__agree" type="checkbox" className="checkbox" />
-                            </div>
+                <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                        <div className="input-group-text">
+                            <input
+                                id="agree"
+                                name="agree"
+                                type="checkbox"
+                                className="checkbox"
+                                ref={register({
+                                    required: "Необходимо согласиться с предоставлением услуги"
+                                })} />
                         </div>
-                        <label htmlFor="call-form__agree" className="form-control">Согласен с предоставлением услуги</label>
                     </div>
+                    <label htmlFor="agree" className="form-control">Согласен с предоставлением услуги</label>
+                </div>
 
-                    <input type="submit" className="btn btn-primary" value="Отправить заявку" />
-                </form >
-            </div >
-        )
-    }
+                {errors.agree ? <ErrorMessage message={errors.agree.message} /> : ''}
+
+                <input type="submit" className="btn btn-primary" value="Отправить заявку" />
+            </form >
+        </div >
+    );
 };
+
+const ErrorMessage = ({ message }) => {
+    return (
+        <div className="form-group call-form__error">
+            {message}
+        </div>
+    );
+}
 
 export default Form;
