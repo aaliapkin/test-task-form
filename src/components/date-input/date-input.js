@@ -1,10 +1,6 @@
 import React, { forwardRef } from "react";
 import MaskedInput from "react-input-mask";
-import { useForm, Controller } from "react-hook-form";
-
-import "./styles.css";
-
-export const clearTel = tel => tel.replace(/[^0-9]/g, "");
+import { Controller } from "react-hook-form";
 
 function formatDate(d) {
     const date = new Date(d);
@@ -34,7 +30,7 @@ function validateDate(value) {
     return true;
 }
 
-function dateFieldToTimestamp(value) {
+export function dateFieldToTimestamp(value) {
     const res = value.match(/^(\d{2}).(\d{2}).(\d{4}) (\d{2}):(\d{2})$/);
     if (res === null) {
         return undefined;
@@ -68,43 +64,26 @@ const CustomMaskedInput = forwardRef((props, ref) => {
     );
 });
 
-const onSubmit = data => {
-    console.log(dateFieldToTimestamp(data.date));
-};
+export default function DateInput({ name, errors, control }) {
 
-export default function App() {
-    const { handleSubmit, errors, control } = useForm({
-        reValidateMode: "onChange"
-    });
     const [tel, setTel] = React.useState(defaultDate());
-    return (
-        <div className="App">
-            <h1>Hello CodeSandbox</h1>
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <div>
-                    <Controller
-                        as={<CustomMaskedInput />}
-                        value={tel}
-                        onChange={([e]) => {
-                            setTel(e);
-                            return { value: e };
-                        }}
-                        rules={{
-                            validate: {
-                                inputTelRequired: v => validateDate(v)
-                            }
-                        }}
-                        defaultValue={tel}
-                        name="date"
-                        control={control}
-                    />
 
-                    {errors.date && (
-                        <p>{errors.date.message}</p>
-                    )}
-                </div>
-                <input type="submit" />
-            </form>
-        </div>
+    return (
+        <Controller
+            as={<CustomMaskedInput />}
+            value={tel}
+            onChange={([e]) => {
+                setTel(e);
+                return { value: e };
+            }}
+            rules={{
+                validate: {
+                    inputTelRequired: v => validateDate(v)
+                }
+            }}
+            defaultValue={tel}
+            name={name}
+            control={control}
+        />
     );
 }

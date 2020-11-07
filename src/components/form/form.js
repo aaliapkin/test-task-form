@@ -1,124 +1,43 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import InputMask from 'react-input-mask';
+import DateInput, { dateFieldToTimestamp } from '../date-input/';
+import TelInput from '../tel-input/';
 
 import './form.scss';
 
 const Form = (props) => {
-    const { handleSubmit, register, errors } = useForm({ reValidateMode: 'onChange' });
+    const { handleSubmit, register, errors, control } = useForm({ reValidateMode: 'onChange' });
+    const [isSubmitting, setSubmitting] = useState(false);
 
-    const onSubmit = (values) => {
-        console.log(values);
-        values.phone = values.phone.trim().replace(/\D/g, '').replace(/(^8|^7)/g, '+7');
-    }
-
-    function formatDate(d) {
-        const date = new Date(d);
-        return ("0" + (date.getDate())).slice(-2) + "." +
-            ("0" + (date.getMonth() + 1)).slice(-2) + "." +
-            date.getFullYear() + " " +
-            ("0" + (date.getHours())).slice(-2) + ":" +
-            ("0" + (date.getMinutes())).slice(-2);
-    }
-
-    function defaultDate() {
-        const date = new Date(Date.now());
-        const tomorrow = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1, 0, 0);
-        return tomorrow.getTime();
-    }
-
-    function validateDate(value) {
-        console.log('validation', value);
-        const res = value.match(/^(\d{2}).(\d{2}).(\d{4}) (\d{2}):(\d{2})$/);
-        if (res === null) {
-            return false;
+    const onSubmit = async (values) => {
+        if (!isSubmitting) {
+            setSubmitting(true);
+            values.date = dateFieldToTimestamp(values.date);
+            values.phone = values.phone.trim().replace(/\D/g, '').replace(/^7/g, '+7');
+            console.log(values);
+            await new Promise(resolve => {
+                setTimeout(() => {
+                    setSubmitting(false);
+                    resolve();
+                }, 2000);
+            });
         }
-        const [, d, mo, y, h, mi] = res;
-        const timestamp = Date.parse(`${y}-${mo}-${d}T${h}:${mi}`);
-        if (isNaN(timestamp)) {
-            return false;
-        }
-        const today = new Date(Date.now());
-        const date = new Date(timestamp);
-        if (date.getTime() < today.getTime()) {
-            return false;
-        }
-        return true;
-    }
-
-
-    const [dateField, setDateField] = useState(formatDate(defaultDate()));
-    const [phoneField, setPhoneField] = useState("+7 (916) 426-5709");
-
-
-    const beforeMaskedValueChange = (newState, oldState, userInput) => {
-        var { value } = newState;
-        var selection = newState.selection;
-        console.log(userInput);
-        return {
-            value,
-            selection
-        };
     }
 
     return (
         <div className="call-form__wrapper mx-auto container">
-            <form onSubmit={handleSubmit(onSubmit)} className="call-form">
+            <form onSubmit={handleSubmit(onSubmit)} className="call-form" disabled={isSubmitting}>
 
                 <div className="form-group">
                     <label htmlFor="phone">Номер телефона</label>
-
-                    <InputMask
-                        name="phone"
-                        mask="+7 (999) 999-9999"
-                        value={phoneField}
-                        onChange={(e) => setPhoneField(e.target.value)}
-                        alwaysShowMask
-                        beforeMaskedValueChange={beforeMaskedValueChange}>
-                        {(inputProps) => {
-                            return (
-                                <input
-                                    id="phone"
-                                    type="tel"
-                                    name={inputProps.name}
-                                    ref={
-                                        register({
-                                            required: "Необходимо указать телефон"
-                                        })
-                                    }
-                                    className="form-control" />
-                            )
-                        }}
-                    </InputMask>
+                    <TelInput name="phone" errors={errors} control={control} />
                 </div>
 
                 {errors.phone ? <ErrorMessage message={errors.phone.message} /> : ''}
 
                 <div className="form-group">
                     <label htmlFor="date">Дата и время обратного звонка</label>
-
-                    <InputMask
-                        name="date"
-                        mask="99.99.9999 99:99"
-                        value={dateField}
-                        onChange={(e) => setDateField(e.target.value)}
-                        alwaysShowMask
-                        beforeMaskedValueChange={beforeMaskedValueChange}>
-                        {(inputProps) => {
-                            return (
-                                <input
-                                    type="text"
-                                    name={inputProps.name}
-                                    ref={
-                                        register({
-                                            required: "Необходимо заполнить дату",
-                                            validate: (value) => validateDate(value) || 'Неверная дата'
-                                        })
-                                    }
-                                    className="form-control" />
-                            )
-                        }}
-                    </InputMask>
+                    <DateInput name="date" errors={errors} control={control} />
                 </div>
 
                 {errors.date ? <ErrorMessage message={errors.date.message} /> : ''}
@@ -128,6 +47,8 @@ const Form = (props) => {
                     <textarea
                         name="comment"
                         id="comment"
+                        maxLength="1024"
+                        rows="6"
                         ref={register({
                             maxLength: {
                                 value: 1024,
@@ -157,7 +78,7 @@ const Form = (props) => {
 
                 {errors.agree ? <ErrorMessage message={errors.agree.message} /> : ''}
 
-                <input type="submit" className="btn btn-primary" value="Отправить заявку" />
+                <input type="submit" className="btn btn-primary" value="Отправить заявку" disabled={isSubmitting} />
             </form >
         </div >
     );
