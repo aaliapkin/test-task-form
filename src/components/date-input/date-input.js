@@ -14,7 +14,7 @@ function formatDate(d) {
 function defaultDate() {
     const date = new Date(Date.now());
     const tomorrow = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1, 0, 0);
-    return formatDate(tomorrow.getTime());
+    return tomorrow.getTime();
 }
 
 function validateDate(value) {
@@ -22,10 +22,10 @@ function validateDate(value) {
     if (timestamp === undefined) {
         return 'Неверная дата';
     }
-    const today = new Date(Date.now());
+    const min_date = defaultDate();
     const date = new Date(timestamp);
-    if (date.getTime() < today.getTime()) {
-        return 'Неверная дата';
+    if (date.getTime() < min_date.getTime()) {
+        return 'Укажите дату не позднее завтрашнего дня';
     }
     return true;
 }
@@ -66,7 +66,7 @@ const CustomMaskedInput = forwardRef((props, ref) => {
 
 export default function DateInput({ name, errors, control }) {
 
-    const [tel, setTel] = React.useState(defaultDate());
+    const [tel, setTel] = React.useState(formatDate(defaultDate()));
 
     return (
         <Controller

@@ -6,21 +6,50 @@ import TelInput from '../tel-input/';
 import './form.scss';
 
 const Form = (props) => {
-    const { handleSubmit, register, errors, control } = useForm({ reValidateMode: 'onChange' });
+    const { handleSubmit, register, setError, clearErrors, errors, control } = useForm({ reValidateMode: 'onChange' });
     const [isSubmitting, setSubmitting] = useState(false);
+    const [success, setSuccess] = useState(false);
 
     const onSubmit = async (values) => {
         if (!isSubmitting) {
             setSubmitting(true);
-            values.date = dateFieldToTimestamp(values.date);
-            values.phone = values.phone.trim().replace(/\D/g, '').replace(/^7/g, '+7');
-            console.log(values);
+            const data = {
+                id: 1,
+                data: {
+                    phone: values.phone.trim().replace(/\D/g, '').replace(/^7/g, '+7'),
+                    date: dateFieldToTimestamp(values.date),
+                    comment: values.comment
+                }
+            }
+
+            fetch('https://cors-anywhere.herokuapp.com/https://interview.gazilla-lounge.ru/api/submit', {
+                method: 'post',
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data)
+            }).then(response => response.json()
+            ).then(data => handleResults(data)
+            ).catch(() => {
+                setError("submit", { type: "double_send", message: "Ошибка при обработке формы" })
+                setTimeout(() => { clearErrors("submit") }, 3000);
+            });
+
             await new Promise(resolve => {
                 setTimeout(() => {
                     setSubmitting(false);
                     resolve();
-                }, 2000);
+                }, 5000);
             });
+        }
+    }
+
+    function handleResults({ data: success }) {
+        if (success) {
+            setSuccess(true);
+        } else {
+            setError("submit", { type: "double_send", message: "Ошибка при обработке формы" })
+            setTimeout(() => { clearErrors("submit") }, 3000);
         }
     }
 
@@ -40,7 +69,7 @@ const Form = (props) => {
                     <DateInput name="date" errors={errors} control={control} />
                 </div>
 
-                {errors.date ? <ErrorMessage message={errors.date.message} /> : ''}
+                <ErrorMessage error={errors.date} />
 
                 <div className="form-group">
                     <label htmlFor="comment">Комментарий к заявке</label>
@@ -58,7 +87,7 @@ const Form = (props) => {
                         className="form-control"></textarea>
                 </div>
 
-                {errors.comment ? <ErrorMessage message={errors.comment.message} /> : ''}
+                <ErrorMessage error={errors.comment} />
 
                 <div className="input-group mb-3">
                     <div className="input-group-prepend">
@@ -76,20 +105,35 @@ const Form = (props) => {
                     <label htmlFor="agree" className="form-control">Согласен с предоставлением услуги</label>
                 </div>
 
-                {errors.agree ? <ErrorMessage message={errors.agree.message} /> : ''}
+                <ErrorMessage error={errors.agree} />
 
-                <input type="submit" className="btn btn-primary" value="Отправить заявку" disabled={isSubmitting} />
+                <div className="form-group">
+                    <input type="submit" className="btn btn-primary" value="Отправить заявку" disabled={isSubmitting} />
+                </div>
+
+                <ErrorMessage error={errors.submit} />
+
+                <SuccessMessage success={success} />
+
             </form >
         </div >
     );
 };
 
-const ErrorMessage = ({ message }) => {
-    return (
-        <div className="form-group call-form__error">
-            {message}
-        </div>
-    );
-}
+const ErrorMessage = ({ error }) => (error ?
+    <div className="form-group call-form__error">
+        {error.message}
+    </div> :
+    <React.Fragment>
+    </React.Fragment>
+);
+
+const SuccessMessage = ({ success }) => (success ?
+    <div className="form-group call-form__success">
+        {'Заявка успешно создана'}
+    </div> :
+    <React.Fragment>
+    </React.Fragment>
+);
 
 export default Form;
