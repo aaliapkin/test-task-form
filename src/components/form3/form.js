@@ -1,4 +1,4 @@
-import React from "react";
+import React, { forwardRef } from "react";
 import MaskedInput from "react-input-mask";
 import { useForm, Controller } from "react-hook-form";
 
@@ -6,23 +6,54 @@ import "./styles.css";
 
 export const clearTel = tel => tel.replace(/[^0-9]/g, "");
 
-const isNotFilledTel = v => {
-    const clearedTel = clearTel(v);
-    return clearedTel.length < 11 ? "Phone number is required." : undefined;
-};
+function formatDate(d) {
+    const date = new Date(d);
+    return ("0" + (date.getDate())).slice(-2) + "." +
+        ("0" + (date.getMonth() + 1)).slice(-2) + "." +
+        date.getFullYear() + " " +
+        ("0" + (date.getHours())).slice(-2) + ":" +
+        ("0" + (date.getMinutes())).slice(-2);
+}
 
-const Input = props => {
-    const { onChange, ...restProps } = props;
-    return <input {...restProps} onChange={onChange} />;
-};
+function defaultDate() {
+    const date = new Date(Date.now());
+    const tomorrow = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1, 0, 0);
+    return formatDate(tomorrow.getTime());
+}
 
-const CustomMaskedInput = props => {
+function validateDate(value) {
+    let timestamp = dateFieldToTimestamp(value);
+    if (timestamp === undefined) {
+        return 'Неверная дата';
+    }
+    const today = new Date(Date.now());
+    const date = new Date(timestamp);
+    if (date.getTime() < today.getTime()) {
+        return 'Неверная дата';
+    }
+    return true;
+}
+
+function dateFieldToTimestamp(value) {
+    const res = value.match(/^(\d{2}).(\d{2}).(\d{4}) (\d{2}):(\d{2})$/);
+    if (res === null) {
+        return undefined;
+    }
+    const [, d, mo, y, h, mi] = res;
+    const timestamp = Date.parse(`${y}-${mo}-${d}T${h}:${mi}`);
+    if (isNaN(timestamp)) {
+        return undefined;
+    }
+    return timestamp;
+}
+
+const CustomMaskedInput = forwardRef((props, ref) => {
     const { value, onChange, name } = props;
     return (
         <MaskedInput
             name={name}
             value={value}
-            mask="+7 (999) 999-99-99"
+            mask="99.99.9999 99:99"
             maskPlaceholder={"_"}
             alwaysShowMask
             onChange={e => {
@@ -30,22 +61,22 @@ const CustomMaskedInput = props => {
                 onChange(e.target.value);
             }}
         >
-            {(inputProps) => (
+            {({ maskPlaceholder, ...inputProps }) => (
                 <input type="text" name={inputProps.name} className="form-control" {...inputProps} />
             )}
         </MaskedInput>
     );
-};
+});
 
 const onSubmit = data => {
-    console.log("submit", data);
+    console.log(dateFieldToTimestamp(data.date));
 };
 
 export default function App() {
     const { handleSubmit, errors, control } = useForm({
-        reValidateMode: "onSubmit"
+        reValidateMode: "onChange"
     });
-    const [tel, setTel] = React.useState("7");
+    const [tel, setTel] = React.useState(defaultDate());
     return (
         <div className="App">
             <h1>Hello CodeSandbox</h1>
@@ -60,16 +91,16 @@ export default function App() {
                         }}
                         rules={{
                             validate: {
-                                inputTelRequired: isNotFilledTel
+                                inputTelRequired: v => validateDate(v)
                             }
                         }}
                         defaultValue={tel}
-                        name="ContolledMaskedInput"
+                        name="date"
                         control={control}
                     />
 
-                    {errors.ContolledMaskedInput && (
-                        <p>{errors.ContolledMaskedInput.message}</p>
+                    {errors.date && (
+                        <p>{errors.date.message}</p>
                     )}
                 </div>
                 <input type="submit" />
