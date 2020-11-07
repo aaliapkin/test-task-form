@@ -3,18 +3,16 @@ import MaskedInput from "react-input-mask";
 import { Controller } from "react-hook-form";
 
 function formatDate(d) {
-    const date = new Date(d);
-    return ("0" + (date.getDate())).slice(-2) + "." +
-        ("0" + (date.getMonth() + 1)).slice(-2) + "." +
-        date.getFullYear() + " " +
-        ("0" + (date.getHours())).slice(-2) + ":" +
-        ("0" + (date.getMinutes())).slice(-2);
+    return ("0" + (d.getDate())).slice(-2) + "." +
+        ("0" + (d.getMonth() + 1)).slice(-2) + "." +
+        d.getFullYear() + " " +
+        ("0" + (d.getHours())).slice(-2) + ":" +
+        ("0" + (d.getMinutes())).slice(-2);
 }
 
 function defaultDate() {
     const date = new Date(Date.now());
-    const tomorrow = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1, 0, 0);
-    return tomorrow.getTime();
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1, 9, 0);
 }
 
 function validateDate(value) {
@@ -25,7 +23,7 @@ function validateDate(value) {
     const min_date = defaultDate();
     const date = new Date(timestamp);
     if (date.getTime() < min_date.getTime()) {
-        return 'Укажите дату не позднее завтрашнего дня';
+        return 'Укажите дату не ранее завтрашнего дня';
     }
     return true;
 }
