@@ -31,8 +31,9 @@ const Form = (props) => {
             }).then(response => response.json()
             ).then(data => handleResults(data)
             ).catch(() => {
-                setError("submit", { type: "double_send", message: "Ошибка при обработке формы" })
+                setError("submit", { type: "send_error", message: "Ошибка при обработке формы" })
                 setTimeout(() => { clearErrors("submit") }, 3000);
+                setSuccess(false);
             });
 
             await new Promise(resolve => {
@@ -48,7 +49,8 @@ const Form = (props) => {
         if (success) {
             setSuccess(true);
         } else {
-            setError("submit", { type: "double_send", message: "Ошибка при обработке формы" })
+            setError("submit", { type: "send_error", message: "Ошибка при обработке формы" })
+            setSuccess(false);
             setTimeout(() => { clearErrors("submit") }, 3000);
         }
     }
